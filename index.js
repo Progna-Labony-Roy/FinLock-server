@@ -13,6 +13,20 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.jafmx4t.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+function verifyJWT( req, res, next){
+  const authHeader = req.headers.authorization;
+  if(!authHeader){
+    return res.status(401).send("unauthorized access")
+  }
+const token = authHeader.split(' ')[1];
+jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded){
+  if(err){
+    return res.status(403).send({message: "forbidden access"})
+  }
+  req.decoded = decoded;
+  next();
+} )
+}
 
 async function run(){
     try{
@@ -34,12 +48,19 @@ async function run(){
             res.status(403).send({accessToken: ''})
           })
 
-          app.get('/users',async (req,res) =>{
+
+          app.get('/users' , verifyJWT, async (req,res) =>{
             const email =req.query.email;
+            const decodedEmail = req.decoded.email;
+
+            if(email !== decodedEmail){
+              return res.status(403).send({message: "forbidden access"})
+            }
             const query ={ email: email};
             const users = await userCollection.find(query).toArray();
             res.send(users)
           })
+
       
        app.post('/users',async (req,res) =>{
             const user = req.body;
