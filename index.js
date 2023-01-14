@@ -17,12 +17,6 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run(){
     try{
         const userCollection= client.db("UserDatabase").collection("users");
-        // const user = {
-        //     name: "testing"
-        // }
-        // const result = await userCollection.insertOne(user);
-        // console.log(result);
-
         // app.post('/jwt',async (req,res) =>{
         //     const user = req.body;
         //     const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h"})
@@ -33,13 +27,18 @@ async function run(){
             const email = req.query.email;
             const query ={email: email};
             const user = await userCollection.findOne(query);
-            console.log(user);
             if(user){
               const token = jwt.sign({email},process.env.ACCESS_TOKEN_SECRET ,{expiresIn: '1h'})
-              console.log(token)
               return res.send({accessToken: token})
             }
             res.status(403).send({accessToken: ''})
+          })
+
+          app.get('/users',async (req,res) =>{
+            const email =req.query.email;
+            const query ={ email: email};
+            const users = await userCollection.find(query).toArray();
+            res.send(users)
           })
       
        app.post('/users',async (req,res) =>{
