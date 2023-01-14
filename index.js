@@ -23,12 +23,24 @@ async function run(){
         // const result = await userCollection.insertOne(user);
         // console.log(result);
 
-        app.post('/jwt',async (req,res) =>{
-            const user = req.body;
-            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h"})
-            res.send({token})
-        })
+        // app.post('/jwt',async (req,res) =>{
+        //     const user = req.body;
+        //     const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h"})
+        //     res.send({token})
+        // })
 
+        app.get('/jwt', async(req, res) =>{
+            const email = req.query.email;
+            const query ={email: email};
+            const user = await userCollection.findOne(query);
+            console.log(user);
+            if(user){
+              const token = jwt.sign({email},process.env.ACCESS_TOKEN_SECRET ,{expiresIn: '1h'})
+              console.log(token)
+              return res.send({accessToken: token})
+            }
+            res.status(403).send({accessToken: ''})
+          })
       
        app.post('/users',async (req,res) =>{
             const user = req.body;
